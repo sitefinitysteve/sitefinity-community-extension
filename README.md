@@ -24,6 +24,8 @@ An unofficial community extension for Sitefinity development tools built with Vu
 - **Response Display**: View responses with JSON syntax highlighting and HTML rendering
 - **Word Wrap Control**: Toggle word wrap on/off for long responses with proper scrollbar handling
 - **URL Copy**: Click any response URL to copy to clipboard
+- **Extended Timeout**: 15-second timeout for long-running requests
+- **Automatic Retry**: Queues and retries requests when Sitefinity is in loading state
 
 ### API Discovery
 - **Automatic Discovery**: Auto-loads and displays available Sitefinity API endpoints
@@ -31,10 +33,30 @@ An unofficial community extension for Sitefinity development tools built with Vu
 - **ServiceStack Integration**: Direct access to ServiceStack metadata with copy-to-clipboard URLs
 - **Help Documentation**: Inline help pages for each API endpoint
 
+### Analytics & Monitoring
+- **Analytics Tool**: Monitor site performance and usage patterns
+- **Request Analytics**: Track API request patterns and response times
+- **System Health**: Monitor Sitefinity system health and performance metrics
+
+### Site Information
+- **Info Tool**: Comprehensive site information and diagnostics
+- **Configuration Details**: View Sitefinity configuration and environment details
+- **Version Information**: Detailed version and build information
+- **System Diagnostics**: Health checks and system status information
+
 ### Site Detection & Analysis  
 - **Sitefinity Detection**: Automatically detects Sitefinity sites and versions
 - **Site Information**: Displays detected Sitefinity version and site details
 - **Status Indicators**: Clear visual indicators for Sitefinity vs non-Sitefinity sites
+- **Loading State Detection**: Automatic detection when Sitefinity is in module loading/recycling state
+- **Smart Request Retry**: Automatically retries failed requests once Sitefinity finishes loading
+
+### Sitefinity Loading State Management
+- **Status Page Detection**: Automatically detects when Sitefinity returns module loading pages instead of API responses
+- **Visual Loading Indicator**: Shows amber spinning indicator in header when Sitefinity is recycling/loading modules
+- **Background Polling**: Polls `/api/default/sfhelp` every 3 seconds to detect when Sitefinity is ready
+- **Smart Request Queuing**: Automatically queues failed requests and retries them when loading completes
+- **Seamless User Experience**: No manual intervention required - requests automatically complete after loading
 
 ### User Experience
 - **Chrome DevTools Integration**: Runs as a dedicated DevTools panel (not popup)
@@ -82,8 +104,16 @@ src/
 │   ├── ApiTester/
 │   │   ├── ApiTester.vue          # Main API testing interface
 │   │   └── ResponsePanel.vue      # Response display with syntax highlighting
+│   ├── Analytics/
+│   │   └── AnalyticsSection.vue   # Analytics monitoring components
+│   ├── Info/
+│   │   └── InfoSection.vue        # Site information components
 │   ├── ApiDiscovery.vue           # API endpoint discovery tool
+│   ├── Analytics.vue              # Analytics tool main interface
+│   └── Info.vue                   # Site information tool
 │   └── Panel.vue                  # Main panel layout and site detection
+├── services/
+│   └── sitefinityStatusService.js # Sitefinity loading state detection and polling
 ├── background.js                  # Chrome extension background script
 ├── content.js                     # Content script for site detection
 ├── devtools.js                    # DevTools integration script

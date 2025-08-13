@@ -16,11 +16,21 @@
             </div>
           </div>
         </div>
-        <div 
-          :class="statusClasses"
-          class="text-xs font-medium px-2 py-1 rounded-sm border"
-        >
-          {{ statusText }}
+        <div class="flex items-center gap-2">
+          <div 
+            :class="statusClasses"
+            class="text-xs font-medium px-2 py-1 rounded-sm border"
+          >
+            {{ statusText }}
+          </div>
+          <!-- Sitefinity Loading Status Indicator -->
+          <div 
+            v-if="isInStatusMode"
+            class="flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-sm border bg-amber-500/15 text-amber-400 border-amber-500/30"
+          >
+            <div class="animate-spin w-3 h-3 border border-amber-400 border-t-transparent rounded-full"></div>
+            <span>Sitefinity Loading...</span>
+          </div>
         </div>
       </div>
 
@@ -97,15 +107,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import ApiTester from './components/ApiTester/ApiTester.vue'
 import ApiDiscovery from './components/ApiDiscovery.vue'
 import Analytics from './components/Analytics.vue'
 import Info from './components/Info.vue'
+import { sitefinityStatusService } from './services/sitefinityStatusService.js'
 
 // Reactive state
 const siteInfo = ref({ isSitefinity: false, version: 'Unknown' })
 const apiTesterRef = ref(null)
+const isInStatusMode = ref(false)
+let statusUnsubscribe = null
 
 // Tool configuration
 const tools = ref([
@@ -202,5 +215,32 @@ const onLoadTypeIntoTester = ({ service, type }) => {
 // Lifecycle
 onMounted(async () => {
   await checkSitefinitySite()
+  
+  // Set up status service monitoring with error handling
+  try {
+    statusUnsubscribe = sitefinityStatusService.onStatusChange((statusMode) => {
+      console.log('Sitefinity status changed:', statusMode)
+      isInStatusMode.value = statusMode
+    })
+    
+    // Delay initial status check to ensure DevTools context is ready
+    setTimeout(async () => {
+      try {
+        await sitefinityStatusService.checkCurrentPageStatus()
+      } catch (error) {
+        console.warn('Initial status check failed:', error.message)
+      }
+    }, 1000)
+  } catch (error) {
+    console.error('Error setting up status service:', error)
+  }
+})
+
+onUnmounted(() => {
+  // Clean up status service subscription
+  if (statusUnsubscribe) {
+    statusUnsubscribe()
+  }
+  sitefinityStatusService.stopPeriodicCheck()
 })
 </script>

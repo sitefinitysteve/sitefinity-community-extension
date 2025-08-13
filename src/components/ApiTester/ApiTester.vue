@@ -128,6 +128,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ResponsePanel from './ResponsePanel.vue'
+import { sitefinityStatusService } from '../../services/sitefinityStatusService.js'
 
 // Props
 const props = defineProps({
@@ -179,6 +180,88 @@ const onMethodChange = () => {
   }
 }
 
+const executeRequestWithParams = async (routeParam, methodParam, bodyParam) => {
+  if (!routeParam) return
+
+  const route = routeParam
+  const method = methodParam
+  const body = bodyParam
+
+  console.log('Executing request with params:', { route, method, body })
+
+  isLoading.value = true
+  currentResponse.value = null
+
+  try {
+    const result = await performRequest(route, method, body)
+    
+    // Check if response contains status page and notify service
+    if (result && result.isStatusPage) {
+      console.log('Status page detected in API response, notifying service');
+      sitefinityStatusService.checkResponseForStatusPage(
+        typeof result.data === 'string' ? result.data : JSON.stringify(result.data),
+        result.url
+      );
+    } else if (result && result.data && typeof result.data === 'string') {
+      // Additional check for status pages that might not have been caught
+      const responseText = result.data;
+      const isStatusPage = responseText.includes('appStatusApp') || 
+                          responseText.includes('ng-app="appStatusApp"') ||
+                          responseText.includes("ng-app='appStatusApp'") ||
+                          (responseText.includes('<html') && responseText.includes('ng-app'));
+      
+      if (isStatusPage) {
+        console.log('Status page detected in post-processing, notifying service');
+        sitefinityStatusService.checkResponseForStatusPage(responseText, result.url);
+        
+        // Add this request to be retried when Sitefinity is ready
+        const requestId = `${method}-${route}-${Date.now()}`;
+        sitefinityStatusService.addPendingRequest(requestId, { route, method, body }, (params) => {
+          console.log('Auto-retrying request after Sitefinity loading completed:', params);
+          // Execute the request directly with stored parameters instead of current form values
+          executeRequestWithParams(params.route, params.method, params.body || '');
+        });
+      }
+    }
+    
+    // Update local response and emit to parent
+    currentResponse.value = result
+    emit('response-update', result)
+    
+    const requestData = {
+      route,
+      method,
+      body: body || undefined,
+      url: result.url,
+      timestamp: new Date().toISOString(),
+      status: result.success ? result.status : 'Error',
+      success: result.success
+    }
+
+    if (!result.success) {
+      requestData.error = result.error
+    }
+
+    await saveToHistory(requestData)
+    await loadHistory()
+    
+  } catch (error) {
+    console.error('Panel execution error:', error)
+    
+    const errorResponse = {
+      success: false,
+      error: error.message,
+      url: 'Unknown',
+      method: method
+    }
+    
+    currentResponse.value = errorResponse
+    emit('response-update', errorResponse)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const executeRequest = async () => {
   const route = apiRoute.value.trim()
   if (!route) return
@@ -186,9 +269,11 @@ const executeRequest = async () => {
   const method = httpMethod.value
   const body = requestBody.value.trim()
 
-  isLoading.value = true
-  currentResponse.value = null
+  await executeRequestWithParams(route, method, body)
+  requestBody.value = ''
+}
 
+const performRequest = async (route, method, body) => {
   try {
     const result = await new Promise((resolve, reject) => {
       const executeCode = `
@@ -230,7 +315,23 @@ const executeRequest = async () => {
                   data = responseText;
                 }
                 
+                // Check if response is a Sitefinity status page
+                const isStatusPage = responseText && (
+                  responseText.includes('appStatusApp') || 
+                  responseText.includes('ng-app="appStatusApp"') ||
+                  responseText.includes("ng-app='appStatusApp'") ||
+                  responseText.includes('Sitefinity is starting') ||
+                  responseText.includes('Please wait while the system is loading') ||
+                  responseText.includes('moduleStatusApp') ||
+                  responseText.includes('startup-status') ||
+                  (responseText.includes('<html') && responseText.includes('ng-app')) ||
+                  responseText.includes('<!DOCTYPE html')
+                );
+                
                 console.log('Sitefinity Community Response data:', data);
+                if (isStatusPage) {
+                  console.log('Sitefinity Community: Status page detected in response');
+                }
                 
                 window.__sitefinityResult = {
                   success: response.ok,
@@ -240,6 +341,7 @@ const executeRequest = async () => {
                   url: fullUrl,
                   method: method,
                   body: bodyData,
+                  isStatusPage: isStatusPage,
                   error: !response.ok ? \`HTTP \${response.status} \${response.statusText}\` : null
                 };
                 
@@ -281,7 +383,7 @@ const executeRequest = async () => {
           console.log('Code executed successfully, result:', result);
           // Poll for result with multiple attempts
           let attempts = 0;
-          const maxAttempts = 10;
+          const maxAttempts = 30;
           const pollInterval = 500;
           
           const pollForResult = () => {
@@ -313,6 +415,35 @@ const executeRequest = async () => {
       });
     });
 
+    // Check if response contains status page and notify service
+    if (result && result.isStatusPage) {
+      console.log('Status page detected in API response, notifying service');
+      sitefinityStatusService.checkResponseForStatusPage(
+        typeof result.data === 'string' ? result.data : JSON.stringify(result.data),
+        result.url
+      );
+    } else if (result && result.data && typeof result.data === 'string') {
+      // Additional check for status pages that might not have been caught
+      const responseText = result.data;
+      const isStatusPage = responseText.includes('appStatusApp') || 
+                          responseText.includes('ng-app="appStatusApp"') ||
+                          responseText.includes("ng-app='appStatusApp'") ||
+                          (responseText.includes('<html') && responseText.includes('ng-app'));
+      
+      if (isStatusPage) {
+        console.log('Status page detected in post-processing, notifying service');
+        sitefinityStatusService.checkResponseForStatusPage(responseText, result.url);
+        
+        // Add this request to be retried when Sitefinity is ready
+        const requestId = `${method}-${route}-${Date.now()}`;
+        sitefinityStatusService.addPendingRequest(requestId, { route, method, body }, (params) => {
+          console.log('Auto-retrying request after Sitefinity loading completed:', params);
+          // Execute the request directly with stored parameters instead of current form values
+          executeRequestWithParams(params.route, params.method, params.body || '');
+        });
+      }
+    }
+    
     // Update local response and emit to parent
     currentResponse.value = result
     emit('response-update', result)
