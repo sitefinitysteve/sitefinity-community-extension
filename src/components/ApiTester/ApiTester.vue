@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full w-full">
     <!-- Left: API Tester Request Panel -->
-    <div class="w-80 bg-vue-dark border-r border-vue-border flex flex-col">
+    <div class="w-90 bg-vue-dark border-r border-vue-border flex flex-col">
       <div class="p-4 border-b border-vue-border bg-vue-darker">
         <h2 class="text-sm font-semibold text-text-primary">API Tester</h2>
       </div>
@@ -93,7 +93,7 @@
                 </span>
                 <span 
                   :class="[
-                    'text-xs font-mono',
+                    'text-xs font-mono break-all',
                     item.success ? 'text-sitefinity-blue' : 'text-sitefinity-green'
                   ]"
                 >
@@ -119,6 +119,7 @@
     <!-- Right: Response Panel (fills remaining space) -->
     <ResponsePanel 
       :current-response="currentResponse"
+      :loading="isLoading"
       @clear-response="clearResponse"
     />
   </div>
@@ -145,6 +146,7 @@ const httpMethod = ref('GET')
 const requestBody = ref('')
 const history = ref([])
 const currentResponse = ref(null)
+const isLoading = ref(false)
 
 // Computed properties
 const showRequestBody = computed(() => {
@@ -183,6 +185,9 @@ const executeRequest = async () => {
 
   const method = httpMethod.value
   const body = requestBody.value.trim()
+
+  isLoading.value = true
+  currentResponse.value = null
 
   try {
     const result = await new Promise((resolve, reject) => {
@@ -234,7 +239,8 @@ const executeRequest = async () => {
                   data: data,
                   url: fullUrl,
                   method: method,
-                  body: bodyData
+                  body: bodyData,
+                  error: !response.ok ? \`HTTP \${response.status} \${response.statusText}\` : null
                 };
                 
                 console.log('Sitefinity Community Result stored:', window.__sitefinityResult);
@@ -342,6 +348,8 @@ const executeRequest = async () => {
     
     currentResponse.value = errorResponse
     emit('response-update', errorResponse)
+  } finally {
+    isLoading.value = false
   }
 }
 

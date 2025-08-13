@@ -104,7 +104,7 @@
             <!-- ServiceStack Status Panel -->
             <div :class="[
               'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden',
-              serviceStackHtmlContent ? 'w-80' : 'flex-1'
+              serviceStackStatus?.isActive ? 'w-80' : 'flex-1'
             ]">
             <!-- ServiceStack Header -->
             <div class="p-4 border-b border-vue-border bg-vue-darkest">
@@ -174,17 +174,28 @@
             </div>
 
             <!-- ServiceStack HTML Content Panel (when active) -->
-            <div v-if="serviceStackHtmlContent" class="flex-1 flex flex-col overflow-hidden bg-vue-dark">
+            <div v-if="serviceStackStatus?.isActive" class="flex-1 flex flex-col overflow-hidden bg-vue-dark">
               <div class="p-4 border-b border-vue-border bg-vue-darkest">
-                <h3 class="text-sm font-semibold text-sitefinity-blue">ServiceStack Metadata Content</h3>
-                <div class="text-xs text-text-muted">HTML Response from /RestApi/metadata</div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-semibold text-sitefinity-blue">ServiceStack Metadata Content</h3>
+                    <div class="text-xs text-text-muted">HTML Response from /RestApi/metadata</div>
+                  </div>
+                  <button 
+                    @click="copyServiceStackUrl"
+                    class="px-2 py-1 text-xs font-medium bg-sitefinity-green/10 text-sitefinity-green border border-sitefinity-green/30 rounded transition-all hover:bg-sitefinity-green/20"
+                    :title="serviceStackCopied ? 'Paste into incognito window' : 'Copy URL to clipboard'"
+                  >
+                    {{ serviceStackCopied ? '✓ Copied to Clipboard, paste into incognito window' : '📋 Copy Link' }}
+                  </button>
+                </div>
               </div>
               
               <div class="flex-1 overflow-hidden">
                 <iframe 
                   :srcdoc="serviceStackHtmlContent"
                   class="w-full h-full border-0"
-                  sandbox="allow-same-origin"
+                  sandbox="allow-same-origin allow-scripts"
                 ></iframe>
               </div>
             </div>
@@ -203,7 +214,7 @@
             <!-- Service Details Panel -->
             <div :class="[
               'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden',
-              endpointHelpContent ? 'w-80' : 'flex-1'
+              selectedEndpoint ? 'w-80' : 'flex-1'
             ]">
             <!-- Service Header -->
             <div class="p-4 border-b border-vue-border bg-vue-darkest">
@@ -264,18 +275,35 @@
             </div>
 
             <!-- Endpoint Help Content Panel (when selected) -->
-            <div v-if="endpointHelpContent" class="flex-1 flex flex-col overflow-hidden bg-vue-dark">
+            <div v-if="selectedEndpoint" class="flex-1 flex flex-col overflow-hidden bg-vue-dark">
               <div class="p-4 border-b border-vue-border bg-vue-darkest">
-                <h3 class="text-sm font-semibold text-sitefinity-blue">{{ selectedEndpoint?.Name }} Help</h3>
-                <div class="text-xs text-text-muted">/api/{{ selectedService?.UrlName }}/{{ selectedEndpoint?.Name.toLowerCase().replace(/\s+/g, '') }}/sfhelp</div>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="text-sm font-semibold text-sitefinity-blue">{{ selectedEndpoint?.Name }} Help</h3>
+                    <div class="text-xs text-text-muted">/api/{{ selectedService?.UrlName }}/{{ selectedEndpoint?.Name.toLowerCase().replace(/\s+/g, '') }}/sfhelp</div>
+                  </div>
+                  <a 
+                    :href="`${props.siteInfo.url}/api/${selectedService?.UrlName}/${selectedEndpoint?.Name.toLowerCase().replace(/\s+/g, '')}/sfhelp`" 
+                    target="_blank"
+                    class="px-2 py-1 text-xs font-medium bg-sitefinity-green/10 text-sitefinity-green border border-sitefinity-green/30 rounded transition-all hover:bg-sitefinity-green/20"
+                  >
+                    🔗 Open in New Window
+                  </a>
+                </div>
               </div>
               
-              <div class="flex-1 overflow-hidden">
-                <iframe 
-                  :srcdoc="endpointHelpContent"
-                  class="w-full h-full border-0"
-                  sandbox="allow-same-origin"
-                ></iframe>
+              <div class="flex-1 overflow-y-auto p-4">
+                <div class="text-center py-8">
+                  <div class="text-sitefinity-blue text-sm mb-2">🔒 Content Blocked by Security Policy</div>
+                  <div class="text-text-muted text-xs mb-4">This help page cannot be displayed in an iframe due to X-Frame-Options restrictions.</div>
+                  <a 
+                    :href="`${props.siteInfo.url}/api/${selectedService?.UrlName}/${selectedEndpoint?.Name.toLowerCase().replace(/\s+/g, '')}/sfhelp`" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-sitefinity-blue text-vue-dark rounded transition-all hover:bg-blue-400"
+                  >
+                    🔗 Open {{ selectedEndpoint?.Name }} Help
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -309,8 +337,7 @@ const serviceStackStatus = ref(null)
 const selectedServiceStack = ref(false)
 const serviceStackHtmlContent = ref(null)
 const selectedEndpoint = ref(null)
-const endpointHelpContent = ref(null)
-const endpointHelpLoading = ref(false)
+const serviceStackCopied = ref(false)
 
 // Methods
 const loadApiDiscovery = async () => {
@@ -512,7 +539,6 @@ const selectService = (service) => {
   selectedServiceStack.value = false
   serviceStackHtmlContent.value = null
   selectedEndpoint.value = null
-  endpointHelpContent.value = null
 }
 
 const selectServiceStack = () => {
@@ -524,91 +550,32 @@ const selectServiceStack = () => {
   }
 }
 
-const selectEndpoint = async (service, type) => {
-  selectedEndpoint.value = type
-  endpointHelpContent.value = null
-  endpointHelpLoading.value = true
-  
-  // Load the help page for this endpoint
-  const helpUrl = `/api/${service.UrlName}/${type.Name.toLowerCase().replace(/\s+/g, '')}/sfhelp`
-  
+const copyServiceStackUrl = async () => {
+  const url = `${props.siteInfo.url}/RestApi/metadata`
   try {
-    const result = await new Promise((resolve, reject) => {
-      const executeCode = `
-        (function() {
-          const helpUrl = window.location.origin + '${helpUrl}';
-          console.log('Sitefinity Community: Loading endpoint help from: ' + helpUrl);
-          
-          fetch(helpUrl, {
-            method: 'GET',
-            headers: {
-              'X-Requested-With': 'Browser'
-            }
-          })
-            .then(response => {
-              return response.text().then(responseText => {
-                window.__sitefinityEndpointHelpResult = {
-                  success: response.ok,
-                  status: response.status,
-                  statusText: response.statusText,
-                  htmlContent: response.ok ? responseText : null,
-                  url: helpUrl
-                };
-              });
-            })
-            .catch(error => {
-              console.error('Sitefinity Community endpoint help failed:', error);
-              window.__sitefinityEndpointHelpResult = {
-                success: false,
-                error: error.message,
-                url: helpUrl
-              };
-            });
-          
-          return 'ENDPOINT_HELP_INITIATED';
-        })()
-      `;
-
-      chrome.devtools.inspectedWindow.eval(executeCode, (result, isException) => {
-        if (isException) {
-          reject(new Error(isException.value || 'Execution failed'));
-        } else {
-          let attempts = 0;
-          const maxAttempts = 10;
-          const pollInterval = 500;
-          
-          const pollForResult = () => {
-            chrome.devtools.inspectedWindow.eval('window.__sitefinityEndpointHelpResult', (asyncResult, asyncException) => {
-              if (asyncException) {
-                reject(new Error('Failed to retrieve endpoint help result'));
-              } else if (asyncResult) {
-                chrome.devtools.inspectedWindow.eval('delete window.__sitefinityEndpointHelpResult');
-                resolve(asyncResult);
-              } else {
-                attempts++;
-                if (attempts < maxAttempts) {
-                  setTimeout(pollForResult, pollInterval);
-                } else {
-                  reject(new Error('Endpoint help timeout'));
-                }
-              }
-            });
-          };
-          
-          setTimeout(pollForResult, 500);
-        }
-      });
-    });
-
-    if (result.success && result.htmlContent) {
-      endpointHelpContent.value = result.htmlContent;
-    }
-    
+    await navigator.clipboard.writeText(url)
+    serviceStackCopied.value = true
+    setTimeout(() => {
+      serviceStackCopied.value = false
+    }, 3000) // Reset after 3 seconds
   } catch (error) {
-    console.error('Endpoint help error:', error);
-  } finally {
-    endpointHelpLoading.value = false;
+    console.error('Failed to copy URL:', error)
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea')
+    textArea.value = url
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    serviceStackCopied.value = true
+    setTimeout(() => {
+      serviceStackCopied.value = false
+    }, 3000)
   }
+}
+
+const selectEndpoint = (service, type) => {
+  selectedEndpoint.value = type
 }
 
 const loadTypeIntoTester = (service, type) => {

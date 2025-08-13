@@ -106,7 +106,7 @@ const statusClasses = computed(() => {
   if (siteInfo.value.isSitefinity) {
     return 'bg-sitefinity-blue/15 text-sitefinity-blue border-sitefinity-blue/30'
   }
-  return 'bg-sitefinity-green/15 text-sitefinity-green border-sitefinity-green/30'
+  return 'bg-red-500/15 text-red-400 border-red-500/30'
 })
 
 const statusText = computed(() => {
@@ -127,10 +127,18 @@ const checkSitefinitySite = async () => {
             if (meta.content && meta.content.toLowerCase().includes('sitefinity')) {
               const versionMatch = meta.content.match(/sitefinity\\s+([\\d.]+)/i);
               const version = versionMatch ? versionMatch[1] : 'Unknown';
-              return { isSitefinity: true, generator: meta.content, version: version };
+              return { 
+                isSitefinity: true, 
+                generator: meta.content, 
+                version: version,
+                url: window.location.origin
+              };
             }
           }
-          return { isSitefinity: false };
+          return { 
+            isSitefinity: false,
+            url: window.location.origin
+          };
         })()
       `, resolve);
     });
@@ -138,7 +146,7 @@ const checkSitefinitySite = async () => {
     siteInfo.value = result
   } catch (error) {
     console.error('Error checking Sitefinity:', error)
-    siteInfo.value = { isSitefinity: false, version: 'Unknown' }
+    siteInfo.value = { isSitefinity: false, version: 'Unknown', url: '' }
   }
 }
 
