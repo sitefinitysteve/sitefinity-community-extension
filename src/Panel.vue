@@ -80,6 +80,12 @@
           @load-type-into-tester="onLoadTypeIntoTester"
         />
 
+        <!-- Analytics Tool -->
+        <Analytics
+          v-else-if="selectedTool === 'analytics'"
+          :site-info="siteInfo"
+        />
+
         <!-- Info Tool -->
         <Info
           v-else-if="selectedTool === 'info'"
@@ -94,6 +100,7 @@
 import { ref, computed, onMounted } from 'vue'
 import ApiTester from './components/ApiTester/ApiTester.vue'
 import ApiDiscovery from './components/ApiDiscovery.vue'
+import Analytics from './components/Analytics.vue'
 import Info from './components/Info.vue'
 
 // Reactive state
@@ -104,6 +111,7 @@ const apiTesterRef = ref(null)
 const tools = ref([
   { id: 'api-tester', name: 'API Tester', icon: '🔧', active: true, disabled: false },
   { id: 'api-discovery', name: 'API Discovery', icon: '🔍', active: false, disabled: false },
+  { id: 'analytics', name: 'Analytics', icon: '📊', active: false, disabled: false },
   { id: 'info', name: 'Info', icon: 'ℹ️', active: false, disabled: false }
 ])
 
