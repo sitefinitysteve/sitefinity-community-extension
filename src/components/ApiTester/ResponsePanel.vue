@@ -164,6 +164,12 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import hljs from 'highlight.js/lib/core'
+import json from 'highlight.js/lib/languages/json'
+import 'highlight.js/styles/vs2015.css'
+
+// Register JSON language
+hljs.registerLanguage('json', json)
 
 // Props
 const props = defineProps({
@@ -215,19 +221,11 @@ const showViewModeButtons = computed(() => {
 const displayContent = computed(() => {
   if (!props.currentResponse || !props.currentResponse.data) return '<span class="text-text-muted">No response data</span>'
   
-  // JSON data - always show highlighted JSON
+  // JSON data - use highlight.js for proper syntax highlighting
   if (isJsonData.value) {
     const jsonString = JSON.stringify(props.currentResponse.data, null, 2)
-    return jsonString
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"([^"]+)":/g, '<span class="text-sitefinity-blue">"$1"</span><span class="text-text-primary">:</span>')
-      .replace(/: "([^"]+)"/g, ': <span class="text-sitefinity-green">"$1"</span>')
-      .replace(/: (true|false)/g, ': <span class="text-sitefinity-yellow">$1</span>')
-      .replace(/: (null)/g, ': <span class="text-text-muted">$1</span>')
-      .replace(/: (-?\d+\.?\d*)/g, ': <span class="text-orange-400">$1</span>')
-      .replace(/(\{|\}|\[|\])/g, '<span class="text-text-primary">$1</span>')
+    const highlighted = hljs.highlight(jsonString, { language: 'json' }).value
+    return highlighted
   }
   
   // HTML/String data - depends on view mode
@@ -252,15 +250,8 @@ const formatErrorResponseData = computed(() => {
   const data = props.currentResponse.data
   if (typeof data === 'object') {
     const jsonString = JSON.stringify(data, null, 2)
-    return jsonString
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\"([^\"]+)\":/g, '<span class="text-sitefinity-blue">\"$1\"</span><span class="text-text-primary">:</span>')
-      .replace(/: \"([^\"]+)\"/g, ': <span class="text-sitefinity-green">\"$1\"</span>')
-      .replace(/: (true|false)/g, ': <span class="text-sitefinity-yellow">$1</span>')
-      .replace(/: (null)/g, ': <span class="text-text-muted">$1</span>')
-      .replace(/: (-?\d+\.?\d*)/g, ': <span class="text-orange-400">$1</span>')
+    const highlighted = hljs.highlight(jsonString, { language: 'json' }).value
+    return highlighted
   } else {
     return String(data)
       .replace(/&/g, '&amp;')
@@ -308,3 +299,27 @@ const getStatusDescription = (status) => {
   return descriptions[status] || 'HTTP Error'
 }
 </script>
+
+<style scoped>
+/* Fix highlight.js punctuation visibility on dark background */
+:deep(.hljs-punctuation) {
+  color: #d4d4d4; /* Light gray for punctuation marks */
+}
+
+/* Ensure other highlight.js elements are visible */
+:deep(.hljs-attr) {
+  color: #92c5f7; /* Blue for attribute names */
+}
+
+:deep(.hljs-string) {
+  color: #ce9178; /* Orange for strings */
+}
+
+:deep(.hljs-number) {
+  color: #b5cea8; /* Green for numbers */
+}
+
+:deep(.hljs-literal) {
+  color: #569cd6; /* Blue for true/false/null */
+}
+</style>

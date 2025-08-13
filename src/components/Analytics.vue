@@ -92,13 +92,46 @@
             </div>
           </div>
         </div>
+
+        <!-- Sitefinity Best Practices -->
+        <div 
+          v-if="props.siteInfo.isSitefinity && (headScripts.length > 3 || hasFrameworksInHead)"
+          class="bg-sitefinity-green/10 border border-sitefinity-green/30 rounded-lg p-4"
+        >
+          <h3 class="text-sm font-semibold text-sitefinity-green mb-3 flex items-center gap-2">
+            <span class="text-lg">🏗️</span>
+            Sitefinity Script Organization
+          </h3>
+          <div class="space-y-3">
+            <p class="text-xs text-text-secondary">
+              For optimal performance in Sitefinity, organize your scripts using section helpers at the bottom of your page templates:
+            </p>
+            <div class="bg-vue-darkest rounded p-3 font-mono text-xs">
+              <div class="text-sitefinity-blue">@Html.Section("jquery")</div>
+              <div class="text-sitefinity-blue">@Html.Section("angular")</div>
+              <div class="text-sitefinity-blue">@Html.Section("vue")</div>
+              <div class="text-sitefinity-blue">@Html.Section("kendo")</div>
+              <div class="text-sitefinity-blue">@Html.Section("kendoLicense")</div>
+              <div class="text-sitefinity-blue">@Html.Section("plugins")</div>
+              <div class="text-sitefinity-blue">@Html.Section("bottom")</div>
+            </div>
+            <div class="space-y-1 text-xs text-text-secondary">
+              <div><strong class="text-sitefinity-green">Benefits:</strong></div>
+              <div>• Frameworks load in correct dependency order</div>
+              <div>• Plugins load after their required frameworks</div>
+              <div>• Custom scripts run after everything is initialized</div>
+              <div>• Better performance with non-blocking script loading</div>
+              <div>• Easier maintenance and debugging</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AnalyticsSection from './Analytics/AnalyticsSection.vue'
 
 // Props
@@ -115,6 +148,16 @@ const headScripts = ref([])
 const bodyScripts = ref([])
 const inlineScripts = ref([])
 const scriptSummary = ref([])
+
+// Computed
+const hasFrameworksInHead = computed(() => {
+  const frameworkPatterns = ['jquery', 'angular', 'vue', 'kendo', 'bootstrap', 'react'];
+  return headScripts.value.some(script => 
+    frameworkPatterns.some(framework => 
+      script.description.toLowerCase().includes(framework)
+    )
+  );
+})
 
 // Methods
 const analyzePageScripts = async () => {
