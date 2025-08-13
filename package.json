@@ -6,6 +6,7 @@
     "dev": "node dev-watch.js",
     "build": "vite build && npm run copy-files",
     "copy-files": "cp manifest.json dist/ && cp panel.html dist/ && cp devtools.html dist/ && node update-html.js",
+    "publish": "npm run build && node create-zip.js",
     "preview": "vite preview"
   },
   "dependencies": {

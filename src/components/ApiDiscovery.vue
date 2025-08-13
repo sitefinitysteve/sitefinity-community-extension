@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-full w-full">
+  <div class="flex flex-col h-full w-full min-h-0">
     <div class="p-4 border-b border-vue-border bg-vue-darker">
       <div class="flex items-center justify-between">
         <h2 class="text-sm font-semibold text-text-primary">API Discovery</h2>
@@ -14,7 +14,7 @@
     </div>
 
     <!-- Discovery Content -->
-    <div class="flex-1 flex">
+    <div class="flex-1 flex min-h-0 overflow-hidden">
       <!-- Loading State -->
       <div v-if="discoveryLoading" class="flex-1 flex items-center justify-center">
         <div class="text-center py-8">
@@ -103,7 +103,7 @@
           <div v-if="selectedServiceStack" class="flex flex-1 overflow-hidden">
             <!-- ServiceStack Status Panel -->
             <div :class="[
-              'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden',
+              'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden min-h-0',
               serviceStackStatus?.isActive ? 'w-80' : 'flex-1'
             ]">
             <!-- ServiceStack Header -->
@@ -124,7 +124,7 @@
             </div>
 
             <!-- ServiceStack Content -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto p-4 min-h-0">
               <div v-if="serviceStackLoading" class="text-center py-8">
                 <div class="text-sitefinity-blue text-sm mb-2">🔄 Checking ServiceStack...</div>
                 <div class="text-text-muted text-xs">Testing /RestApi/metadata endpoint</div>
@@ -213,7 +213,7 @@
           <div v-else class="flex flex-1 overflow-hidden">
             <!-- Service Details Panel -->
             <div :class="[
-              'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden',
+              'flex flex-col border-r border-vue-border bg-vue-dark overflow-hidden min-h-0',
               selectedEndpoint ? 'w-80' : 'flex-1'
             ]">
             <!-- Service Header -->
@@ -239,7 +239,7 @@
             </div>
 
             <!-- Endpoints List -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto p-4 min-h-0">
               <div v-if="!selectedService.Types || selectedService.Types.length === 0" class="text-center py-8 text-text-muted text-xs">
                 No endpoints available
               </div>

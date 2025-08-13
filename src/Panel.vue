@@ -144,6 +144,12 @@ const checkSitefinitySite = async () => {
     });
 
     siteInfo.value = result
+    
+    // Update toolbar icon based on detection
+    chrome.runtime.sendMessage({
+      action: 'updateIcon',
+      isSitefinity: result.isSitefinity
+    })
   } catch (error) {
     console.error('Error checking Sitefinity:', error)
     siteInfo.value = { isSitefinity: false, version: 'Unknown', url: '' }
@@ -180,6 +186,5 @@ const onLoadTypeIntoTester = ({ service, type }) => {
 // Lifecycle
 onMounted(async () => {
   await checkSitefinitySite()
-  await loadHistory()
 })
 </script>
