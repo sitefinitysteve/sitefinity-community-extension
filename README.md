@@ -76,6 +76,18 @@ src/
 ├── panel.html                     # Panel HTML template
 └── style.css                      # Tailwind CSS configuration
 
+tools/                             # Build and deployment tools
+├── create-store-icon.js           # Generate 128x128 store icon
+├── create-zip.js                  # Package extension for Chrome Web Store
+└── resize-screenshots.js         # Resize screenshots to store requirements
+
+assets/
+├── store-screenshots/             # Chrome Web Store screenshots (1280x800)
+│   ├── api-discovery.png
+│   ├── api-tester-servicestack.png
+│   └── api-tester.png
+└── *.png                          # Original screenshots
+
 dist/                              # Build output (auto-generated)
 ├── panel.html                     # Vue.js-powered DevTools panel
 ├── panel.js                       # Bundled Vue application
@@ -83,12 +95,31 @@ dist/                              # Build output (auto-generated)
 ├── content.js                     # Content script for site detection
 ├── devtools.js                    # DevTools entry point
 └── manifest.json                  # Extension manifest
+
+publish/                           # Deployment artifacts
+└── sitefinity-community-extension.zip  # Ready for Chrome Web Store
 ```
 
 ## Chrome Web Store Deployment
 
+### Option 1: Automated (Recommended)
+```bash
+npm run publish
+```
+
+This will:
+1. Build the extension for production
+2. Create `publish/sitefinity-community-extension.zip` ready for upload
+3. Display next steps for Chrome Web Store submission
+
+To create the store icon separately:
+```bash
+npm run create-icon
+```
+
+### Option 2: Manual
 1. Run `npm run build`
-2. Zip the entire `dist/` folder
+2. Manually zip the entire `dist/` folder
 3. Upload to Chrome Web Store Developer Dashboard
 
 ## Tech Stack
