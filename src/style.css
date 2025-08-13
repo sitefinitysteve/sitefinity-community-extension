@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vue-dark: rgb(38 38 38);
+  --color-vue-darker: rgb(32 32 32);
+  --color-vue-darkest: rgb(28 28 28);
+  --color-vue-border: rgb(68 68 68);
+  --color-vue-border-light: rgba(68, 68, 68, 0.5);
+  --color-sitefinity-pink: rgb(255 107 157);
+  --color-sitefinity-blue: rgb(0 217 255);
+  --color-sitefinity-yellow: rgb(255 193 7);
+  --color-text-primary: rgb(229 229 229);
+  --color-text-secondary: rgb(179 179 179);
+  --color-text-muted: rgb(136 136 136);
+}
+
+/* Custom scrollbar styling for webkit browsers */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: rgb(32, 32, 32);
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(68, 68, 68);
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(85, 85, 85);
+}

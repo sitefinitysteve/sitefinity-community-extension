@@ -1,0 +1,20 @@
+{
+  "name": "sitefinity-community-extension",
+  "version": "1.0.0",
+  "description": "Unofficial community extension for Sitefinity development tools",
+  "scripts": {
+    "dev": "vite build --watch && npm run copy-files",
+    "build": "vite build && npm run copy-files",
+    "copy-files": "cp manifest.json dist/ && cp panel.html dist/ && cp devtools.html dist/ && node update-html.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.11",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "type": "module"
+}
