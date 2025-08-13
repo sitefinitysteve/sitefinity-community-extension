@@ -19,7 +19,14 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         chunkFileNames: '[name].js',
-        assetFileNames: '[name].[hash].[ext]'
+        assetFileNames: (assetInfo) => {
+          // Don't hash image files - keep original names
+          if (assetInfo.name && /\.(png|jpe?g|gif|svg|ico)$/.test(assetInfo.name)) {
+            return '[name].[ext]'
+          }
+          // Hash other assets like CSS
+          return '[name].[hash].[ext]'
+        }
       },
       external: []
     },
