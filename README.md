@@ -2,6 +2,20 @@
 
 An unofficial community extension for Sitefinity development tools built with Vue.js 3 and Tailwind CSS 4.
 
+## Screenshots
+
+### API Tester
+![API Tester](assets/api-tester.png)
+*Test Sitefinity REST API endpoints with full HTTP method support, request history, and detailed response analysis*
+
+### API Discovery
+![API Discovery](assets/api-discovery.png)
+*Auto-discover available Sitefinity API endpoints with integrated help documentation and three-column layout*
+
+### ServiceStack Integration
+![ServiceStack Integration](assets/api-tester-servicestack.png)
+*Direct access to ServiceStack metadata with copy-to-clipboard URLs for incognito testing*
+
 ## Features
 
 ### API Testing Tools
