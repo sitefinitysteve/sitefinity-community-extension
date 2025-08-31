@@ -5,8 +5,7 @@
   "description": "Unofficial community extension for Sitefinity development tools - API testing, site analysis, and developer utilities",
   "permissions": [
     "activeTab",
-    "storage",
-    "scripting"
+    "storage"
   ],
   "devtools_page": "dist/devtools.html",
   "host_permissions": [

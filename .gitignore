@@ -7,3 +7,4 @@ dist/
 .env.*.local
 .claude
 publish
+assets/store-screenshots/Thumbs.db
