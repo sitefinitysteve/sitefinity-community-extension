@@ -6,15 +6,10 @@
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-3">
           <img 
-            src="/sitefinity-cms-logo_u5.png" 
-            alt="Sitefinity CMS" 
+            src="/logo.svg" 
+            alt="SitefinityXHR" 
             class="h-8 w-auto"
           />
-          <div>
-            <div class="text-xs text-text-muted italic uppercase tracking-wide">
-              Unofficial Extension
-            </div>
-          </div>
         </div>
         <div class="flex items-center gap-2">
           <div 

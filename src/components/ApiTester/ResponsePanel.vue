@@ -1,8 +1,12 @@
 <template>
   <div class="flex-1 bg-vue-dark flex flex-col min-w-0 overflow-hidden">
-    <div class="flex justify-between items-center p-4 border-b border-vue-border bg-vue-darker">
+    <div 
+      v-if="currentResponse || loading"
+      class="flex justify-between items-center p-4 border-b border-vue-border bg-vue-darker"
+    >
       <h2 class="text-sm font-semibold text-text-primary">Response</h2>
       <button
+        v-if="currentResponse"
         @click="clearResponse"
         class="px-2 py-1 text-xs font-medium bg-sitefinity-green/10 text-sitefinity-green border border-sitefinity-green/30 rounded transition-all hover:bg-sitefinity-green/20"
       >
