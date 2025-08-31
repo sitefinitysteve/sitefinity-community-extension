@@ -70,14 +70,14 @@
           </template>
         </div>
         
-        <!-- URL with copy functionality -->
+        <!-- URL with open in new tab functionality -->
         <div 
-          @click="copyUrl" 
+          @click="openUrl" 
           class="text-xs text-text-secondary break-all font-mono cursor-pointer hover:text-sitefinity-blue transition-colors px-2 py-1 rounded hover:bg-vue-darker"
-          :title="urlCopied ? 'Copied!' : 'Click to copy URL'"
+          title="Click to open URL in new tab"
         >
           {{ currentResponse.url }}
-          <span v-if="urlCopied" class="text-sitefinity-green ml-2">✓ Copied</span>
+          <span class="text-sitefinity-blue ml-2">↗</span>
         </div>
         
         <!-- Word wrap toggle -->
@@ -186,7 +186,6 @@ const props = defineProps({
 // Local state for view mode and options
 const viewMode = ref('source') // 'source', 'rendered'
 const wordWrapEnabled = ref(true) // Default to word wrap enabled
-const urlCopied = ref(false)
 
 // Emits
 const emit = defineEmits(['clear-response'])
@@ -265,17 +264,14 @@ const clearResponse = () => {
   emit('clear-response')
 }
 
-const copyUrl = async () => {
+const openUrl = () => {
   if (!props.currentResponse?.url) return
   
   try {
-    await navigator.clipboard.writeText(props.currentResponse.url)
-    urlCopied.value = true
-    setTimeout(() => {
-      urlCopied.value = false
-    }, 2000)
+    chrome.tabs.create({ url: props.currentResponse.url })
   } catch (error) {
-    console.error('Failed to copy URL:', error)
+    // Fallback for when chrome.tabs is not available
+    window.open(props.currentResponse.url, '_blank')
   }
 }
 

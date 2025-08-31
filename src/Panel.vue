@@ -25,7 +25,7 @@
           </div>
           <!-- Sitefinity Loading Status Indicator -->
           <div 
-            v-if="isInStatusMode"
+            v-if="isInStatusMode && siteInfo.isSitefinity"
             class="flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-sm border bg-amber-500/15 text-amber-400 border-amber-500/30"
           >
             <div class="animate-spin w-3 h-3 border border-amber-400 border-t-transparent rounded-full"></div>
