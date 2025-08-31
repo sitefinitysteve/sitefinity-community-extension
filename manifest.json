@@ -7,18 +7,18 @@
     "activeTab",
     "storage"
   ],
-  "devtools_page": "dist/devtools.html",
+  "devtools_page": "devtools.html",
   "host_permissions": [
     "<all_urls>"
   ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["dist/content.js"]
+      "js": ["content.js"]
     }
   ],
   "background": {
-    "service_worker": "dist/background.js"
+    "service_worker": "background.js"
   },
   "web_accessible_resources": [
     {
