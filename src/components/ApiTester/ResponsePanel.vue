@@ -1,20 +1,32 @@
 <template>
-  <div class="flex-1 bg-vue-dark flex flex-col min-w-0 overflow-hidden">
-    <div 
+  <div class="bg-vue-dark flex flex-col min-w-0">
+    <div
       v-if="currentResponse || loading"
       class="flex justify-between items-center p-4 border-b border-vue-border bg-vue-darker"
     >
       <h2 class="text-sm font-semibold text-text-primary">Response</h2>
-      <button
-        v-if="currentResponse"
-        @click="clearResponse"
-        class="px-2 py-1 text-xs font-medium bg-sitefinity-green/10 text-sitefinity-green border border-sitefinity-green/30 rounded transition-all hover:bg-sitefinity-green/20"
-      >
-        Clear
-      </button>
+      <div v-if="currentResponse" class="flex gap-2">
+        <button
+          @click="copyToClipboard"
+          :class="[
+            'px-2 py-1 text-xs font-medium rounded transition-all',
+            copyButtonText === 'Copied!'
+              ? 'bg-sitefinity-blue text-vue-dark'
+              : 'bg-sitefinity-blue/10 text-sitefinity-blue border border-sitefinity-blue/30 hover:bg-sitefinity-blue/20'
+          ]"
+        >
+          {{ copyButtonText }}
+        </button>
+        <button
+          @click="clearResponse"
+          class="px-2 py-1 text-xs font-medium bg-sitefinity-green/10 text-sitefinity-green border border-sitefinity-green/30 rounded transition-all hover:bg-sitefinity-green/20"
+        >
+          Clear
+        </button>
+      </div>
     </div>
     
-    <div class="flex-1 overflow-y-auto p-4 bg-vue-dark min-w-0">
+    <div class="p-4 bg-vue-dark min-w-0">
       <!-- Loading Skeleton -->
       <div v-if="loading" class="space-y-4 animate-pulse">
         <div class="flex items-center gap-2">
@@ -98,7 +110,7 @@
         
         <div class="bg-vue-darker border border-vue-border rounded p-3 overflow-auto min-w-0 max-w-full">
           <!-- Rendered HTML view -->
-          <iframe 
+          <iframe
             v-if="viewMode === 'rendered' && isHtmlData"
             ref="htmlPreviewFrame"
             class="w-full min-h-[400px] bg-white rounded border-0"
@@ -106,18 +118,60 @@
             sandbox="allow-same-origin"
           ></iframe>
           <!-- Source view (JSON highlighted or plain text) -->
-          <pre 
+          <pre
             v-else
             :class="[
               'text-xs font-mono leading-relaxed',
-              wordWrapEnabled 
-                ? 'whitespace-pre-wrap break-all word-break-break-all overflow-wrap-anywhere' 
+              wordWrapEnabled
+                ? 'whitespace-pre-wrap break-all word-break-break-all overflow-wrap-anywhere'
                 : 'whitespace-pre'
             ]"
             :style="wordWrapEnabled ? 'word-break: break-all; overflow-wrap: anywhere;' : ''"
             v-html="displayContent"
           ></pre>
         </div>
+
+        <!-- Request Payload (if available) -->
+        <details v-if="currentResponse.requestPayload" class="group" open>
+          <summary class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-secondary hover:text-text-primary py-2">
+            <span class="text-sitefinity-yellow">&#9654;</span>
+            <span class="group-open:hidden">Request Payload</span>
+            <span class="hidden group-open:inline">Request Payload</span>
+          </summary>
+          <div class="bg-vue-darker border border-vue-border rounded p-3 overflow-auto max-h-48">
+            <pre class="text-xs font-mono text-text-primary whitespace-pre-wrap" v-html="formatPayload"></pre>
+          </div>
+        </details>
+
+        <!-- Request Headers (if available) -->
+        <details v-if="currentResponse.requestHeaders && Object.keys(currentResponse.requestHeaders).length > 0" class="group" open>
+          <summary class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-secondary hover:text-text-primary py-2">
+            <span class="text-sitefinity-blue">&#9654;</span>
+            <span>Request Headers</span>
+            <span class="text-text-muted">({{ Object.keys(currentResponse.requestHeaders).length }})</span>
+          </summary>
+          <div class="bg-vue-darker border border-vue-border rounded p-3 overflow-auto max-h-48">
+            <div v-for="(value, key) in currentResponse.requestHeaders" :key="'req-' + key" class="text-xs font-mono mb-1">
+              <span class="text-sitefinity-blue">{{ key }}:</span>
+              <span class="text-text-primary ml-2 break-all">{{ value }}</span>
+            </div>
+          </div>
+        </details>
+
+        <!-- Response Headers (if available) -->
+        <details v-if="currentResponse.responseHeaders && Object.keys(currentResponse.responseHeaders).length > 0" class="group" open>
+          <summary class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-text-secondary hover:text-text-primary py-2">
+            <span class="text-sitefinity-green">&#9654;</span>
+            <span>Response Headers</span>
+            <span class="text-text-muted">({{ Object.keys(currentResponse.responseHeaders).length }})</span>
+          </summary>
+          <div class="bg-vue-darker border border-vue-border rounded p-3 overflow-auto max-h-48">
+            <div v-for="(value, key) in currentResponse.responseHeaders" :key="'res-' + key" class="text-xs font-mono mb-1">
+              <span class="text-sitefinity-green">{{ key }}:</span>
+              <span class="text-text-primary ml-2 break-all">{{ value }}</span>
+            </div>
+          </div>
+        </details>
       </div>
       
       <div v-else class="space-y-3">
@@ -190,6 +244,7 @@ const props = defineProps({
 // Local state for view mode and options
 const viewMode = ref('source') // 'source', 'rendered'
 const wordWrapEnabled = ref(true) // Default to word wrap enabled
+const copyButtonText = ref('Copy')
 
 // Emits
 const emit = defineEmits(['clear-response'])
@@ -249,7 +304,7 @@ const displayContent = computed(() => {
 // Format error response data with syntax highlighting if JSON
 const formatErrorResponseData = computed(() => {
   if (!props.currentResponse || !props.currentResponse.data) return ''
-  
+
   const data = props.currentResponse.data
   if (typeof data === 'object') {
     const jsonString = JSON.stringify(data, null, 2)
@@ -257,6 +312,23 @@ const formatErrorResponseData = computed(() => {
     return highlighted
   } else {
     return String(data)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+  }
+})
+
+// Format request payload with syntax highlighting
+const formatPayload = computed(() => {
+  if (!props.currentResponse?.requestPayload) return ''
+
+  const payload = props.currentResponse.requestPayload
+  if (typeof payload === 'object') {
+    const jsonString = JSON.stringify(payload, null, 2)
+    const highlighted = hljs.highlight(jsonString, { language: 'json' }).value
+    return highlighted
+  } else {
+    return String(payload)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -297,6 +369,51 @@ const getStatusDescription = (status) => {
     504: 'Gateway Timeout - Upstream server failed to respond in time'
   }
   return descriptions[status] || 'HTTP Error'
+}
+
+const copyToClipboard = async () => {
+  if (!props.currentResponse?.data) return
+
+  const textToCopy = typeof props.currentResponse.data === 'object'
+    ? JSON.stringify(props.currentResponse.data, null, 2)
+    : String(props.currentResponse.data)
+
+  try {
+    // Try modern clipboard API first
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(textToCopy)
+    } else {
+      // Fallback for restricted contexts
+      fallbackCopy(textToCopy)
+    }
+    copyButtonText.value = 'Copied!'
+  } catch (error) {
+    // Fallback if clipboard API fails (common in DevTools panels)
+    try {
+      fallbackCopy(textToCopy)
+      copyButtonText.value = 'Copied!'
+    } catch (fallbackError) {
+      console.error('Failed to copy:', fallbackError)
+      copyButtonText.value = 'Failed'
+    }
+  }
+
+  setTimeout(() => {
+    copyButtonText.value = 'Copy'
+  }, 2000)
+}
+
+const fallbackCopy = (text) => {
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  textarea.style.top = '0'
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  document.execCommand('copy')
+  document.body.removeChild(textarea)
 }
 </script>
 
