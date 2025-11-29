@@ -13,7 +13,6 @@ export default defineConfig({
       input: {
         panel: resolve(__dirname, 'src/main.js'),
         background: resolve(__dirname, 'background.js'),
-        content: resolve(__dirname, 'content.js'),
         devtools: resolve(__dirname, 'devtools.js')
       },
       output: {

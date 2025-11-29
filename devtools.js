@@ -3,19 +3,26 @@
 
 // Check if the current page is a Sitefinity site before creating the panel
 function checkAndCreatePanel() {
-  // Get the tab ID of the inspected window
-  const tabId = chrome.devtools.inspectedWindow.tabId;
+  // Use eval to directly check for Sitefinity meta tag in the inspected page
+  const checkCode = `
+    (function() {
+      const metaTags = document.querySelectorAll('meta[name="Generator"]');
+      for (const meta of metaTags) {
+        if (meta.content && meta.content.toLowerCase().includes('sitefinity')) {
+          return true;
+        }
+      }
+      return false;
+    })()
+  `;
 
-  // Send message to content script to check if it's a Sitefinity site
-  chrome.tabs.sendMessage(tabId, { action: 'checkSitefinity' }, function(response) {
-    if (chrome.runtime.lastError) {
-      // Content script might not be loaded yet, retry after a delay
-      console.log('Sitefinity Community: Waiting for content script...');
-      setTimeout(checkAndCreatePanel, 500);
+  chrome.devtools.inspectedWindow.eval(checkCode, function(isSitefinity, isException) {
+    if (isException) {
+      console.log('Sitefinity Community: Error checking for Sitefinity');
       return;
     }
 
-    if (response && response.isSitefinity) {
+    if (isSitefinity) {
       createPanel();
     } else {
       console.log('Sitefinity Community: Not a Sitefinity site, panel not created');
